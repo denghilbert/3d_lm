@@ -107,6 +107,15 @@ def main(args):
     assert os.path.isfile(args.pretrained)
     ckpt = torch.load(args.pretrained, 'cpu')
     croco_args = croco_args_from_ckpt(ckpt)
+    ckpt_new = {}
+    ckpt_new['croco_kwargs'] = ckpt['croco_kwargs']
+    ckpt_new['model'] = {}
+    for key in ckpt['model']:
+        if 'dec_blocks' in key:
+            ckpt_new['model'][key.replace('dec_blocks', 'dec_blocks_left')] = ckpt['model'][key]
+            ckpt_new['model'][key.replace('dec_blocks', 'dec_blocks_right')] = ckpt['model'][key]
+        else:
+            ckpt_new['model'][key] = ckpt['model'][key]
     croco_args['img_size'] = (args.crop[0], args.crop[1])
     print('Croco args: '+str(croco_args))
     args.croco_args = croco_args # saved for test time
@@ -118,8 +127,8 @@ def main(args):
     head.num_channels = num_channels
     # build model and load pretrained weights
     model = CroCoDownstreamBinocular(head, **croco_args)
-    interpolate_pos_embed(model, ckpt['model'])
-    msg = model.load_state_dict(ckpt['model'], strict=False)
+    interpolate_pos_embed(model, ckpt_new['model'])
+    msg = model.load_state_dict(ckpt_new['model'], strict=False)
     print(msg)
 
     total_params = sum(p.numel() for p in model.parameters())
@@ -152,7 +161,16 @@ def main(args):
         best_so_far = None
         args.start_epoch = 0
         ckpt = torch.load(args.start_from, 'cpu')
-        msg = model_without_ddp.load_state_dict(ckpt['model'], strict=False)
+        ckpt_new = {}
+        ckpt_new['args'] = ckpt['args']
+        ckpt_new['model'] = {}
+        for key in ckpt['model']:
+            if 'dec_blocks' in key:
+                ckpt_new['model'][key.replace('dec_blocks', 'dec_blocks_left')] = ckpt['model'][key]
+                ckpt_new['model'][key.replace('dec_blocks', 'dec_blocks_right')] = ckpt['model'][key]
+            else:
+                ckpt_new['model'][key] = ckpt['model'][key]
+        msg = model_without_ddp.load_state_dict(ckpt_new['model'], strict=False)
         print(msg)
     else:
         best_so_far = misc.load_model(args=args, model_without_ddp=model_without_ddp, optimizer=optimizer, loss_scaler=loss_scaler)

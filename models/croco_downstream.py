@@ -24,11 +24,11 @@ class CroCoDownstreamMonocularEncoder(CroCoNet):
                  head,
                  **kwargs):
         """ Build network for monocular downstream task, only using the encoder.
-        It takes an extra argument head, that is called with the features 
+        It takes an extra argument head, that is called with the features
           and a dictionary img_info containing 'width' and 'height' keys
         The head is setup with the croconet arguments in this init function
         NOTE: It works by *calling super().__init__() but with redefined setters
-        
+
         """
         super(CroCoDownstreamMonocularEncoder, self).__init__(**kwargs)
         head.setup(self)
@@ -60,15 +60,15 @@ class CroCoDownstreamMonocularEncoder(CroCoNet):
         need_all_layers = hasattr(self.head, 'return_all_blocks') and self.head.return_all_blocks
         out, _, _ = self._encode_image(img, do_mask=False, return_all_blocks=need_all_layers)
         return self.head(out, img_info)
-        
-        
+
+
 class CroCoDownstreamBinocular(CroCoNet):
 
     def __init__(self,
                  head,
                  **kwargs):
         """ Build network for binocular downstream task
-        It takes an extra argument head, that is called with the features 
+        It takes an extra argument head, that is called with the features
           and a dictionary img_info containing 'width' and 'height' keys
         The head is setup with the croconet arguments in this init function
         """
